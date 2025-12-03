@@ -131,6 +131,8 @@ The `force` parameter can be provided either as a query parameter or in the requ
 If `force` is not provided or is `false`, the VM will be gracefully shut down.
 If `force` is `true`, the VM will be forcefully stopped.
 
+**Note:** When `force` is `false` or not provided, the shutdown integration service must be available and enabled on the VM. If it is not, a 422 error will be returned.
+
 Response 200:
 { "stopped": "vm1" }
 
@@ -139,6 +141,12 @@ Response 404:
 
 Response 409:
 { "error": "VM is already stopped" }
+
+Response 422:
+{
+  "error": "Shutdown integration service not available or not enabled",
+  "detail": "Le service d'intégration d'arrêt (Shutdown) n'est pas disponible pour la VM 'vm1'. Utilisez le paramètre 'force' pour un arrêt forcé."
+}
 
 Response 500:
 {
