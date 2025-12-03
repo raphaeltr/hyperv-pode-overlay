@@ -224,9 +224,22 @@ function global:Add-HvoVmRoutes {
             }
         }
         catch {
+            $errorMessage = $_.Exception.Message
+            
+            # Détecter les erreurs liées au service d'intégration d'arrêt
+            if ($errorMessage -match 'SHUTDOWN_SERVICE_NOT_AVAILABLE|SHUTDOWN_SERVICE_NOT_ENABLED') {
+                # Extraire le message sans le préfixe
+                $detail = $errorMessage -replace '^[^:]+:\s*', ''
+                Write-PodeJsonResponse -StatusCode 422 -Value @{
+                    error = "Shutdown integration service not available or not enabled"
+                    detail = $detail
+                }
+                return
+            }
+            
             Write-PodeJsonResponse -StatusCode 500 -Value @{
                 error = "Failed to restart VM"
-                detail = $_.Exception.Message
+                detail = $errorMessage
             }
         }
     }

@@ -168,6 +168,8 @@ The `force` parameter can be provided either as a query parameter or in the requ
 If `force` is not provided or is `false`, the VM will be gracefully restarted.
 If `force` is `true`, the VM will be forcefully restarted.
 
+**Note:** When `force` is `false` or not provided, the shutdown integration service must be available and enabled on the VM. If it is not, a 422 error will be returned.
+
 If the VM is already stopped, it will be started (idempotent behavior).
 
 Response 200:
@@ -175,6 +177,12 @@ Response 200:
 
 Response 404:
 { "error": "VM not found" }
+
+Response 422:
+{
+  "error": "Shutdown integration service not available or not enabled",
+  "detail": "Le service d'intégration d'arrêt (Shutdown) n'est pas disponible pour la VM 'vm1'. Utilisez le paramètre 'force' pour un redémarrage forcé."
+}
 
 Response 500:
 {

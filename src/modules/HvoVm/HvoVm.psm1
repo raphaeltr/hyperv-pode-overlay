@@ -216,6 +216,17 @@ function Restart-HvoVm {
                 Restart-VM -Name $Name -Force -ErrorAction Stop
             }
             else {
+                # Vérifier la présence et l'activation du service d'intégration d'arrêt
+                $shutdownService = Get-VMIntegrationService -VMName $Name -Name "Shutdown" -ErrorAction SilentlyContinue
+                
+                if (-not $shutdownService) {
+                    throw "SHUTDOWN_SERVICE_NOT_AVAILABLE: Le service d'intégration d'arrêt (Shutdown) n'est pas disponible pour la VM '$Name'. Utilisez le paramètre 'force' pour un redémarrage forcé."
+                }
+                
+                if (-not $shutdownService.Enabled) {
+                    throw "SHUTDOWN_SERVICE_NOT_ENABLED: Le service d'intégration d'arrêt (Shutdown) n'est pas activé pour la VM '$Name'. Utilisez le paramètre 'force' pour un redémarrage forcé."
+                }
+                
                 Restart-VM -Name $Name -ErrorAction Stop
             }
             return @{
