@@ -15,7 +15,30 @@ function global:Add-HvoVmRoutes {
             }
         }
     }
+    #
+    # GET /vms/:name
+    #
+    Add-PodeRoute -Method Get -Path '/vms/:name' -ScriptBlock {
+        try {
+            $name = $WebEvent.Parameters['name']
 
+            $vm = Get-HvoVm -Name $name
+            if (-not $vm) {
+                Write-PodeJsonResponse -StatusCode 404 -Value @{
+                    error = "VM not found"
+                }
+                return
+            }
+
+            Write-PodeJsonResponse -Value $vm
+        }
+        catch {
+            Write-PodeJsonResponse -StatusCode 500 -Value @{
+                error = "Failed to get VM"
+                detail = $_.Exception.Message
+            }
+        }
+    }
 
     #
     # POST /vms
