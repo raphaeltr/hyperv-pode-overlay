@@ -221,7 +221,7 @@ function Restart-HvoVm {
         $vmState = $vm.State.ToString()
         
         if ($vmState -eq "Off") {
-            # Idempotence : si la VM est arrêtée, la démarrer
+            # Idempotence: if the VM is stopped, start it
             Start-VM -Name $Name -ErrorAction Stop
             return @{
                 Restarted = $true
