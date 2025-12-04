@@ -1,7 +1,19 @@
 function global:Add-HvoCommonRoutes {
-    ###
-    ### GET /health
-    ###
+    # @openapi
+    # path: /health
+    # method: GET
+    # summary: Vérifie l'état du serveur API
+    # description: Retourne l'état de santé du serveur et sa configuration
+    # tags: [Health]
+    # responses:
+    #   200:
+    #     description: Serveur opérationnel
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: '#/components/schemas/HealthResponse'
+    #   500:
+    #     $ref: '#/components/responses/Error'
     Add-PodeRoute -Method Get -Path '/health' -ScriptBlock {
         try {
             # Ensure config and Get-HvoConfig are available in Pode's runspace

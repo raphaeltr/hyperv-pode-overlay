@@ -1,8 +1,22 @@
 function global:Add-HvoVmRoutes {
 
-    #
-    # GET /vms
-    #
+    # @openapi
+    # path: /vms
+    # method: GET
+    # summary: Liste toutes les machines virtuelles
+    # description: Retourne la liste complète des VMs avec leur état actuel
+    # tags: [VMs]
+    # responses:
+    #   200:
+    #     description: Liste des VMs
+    #     content:
+    #       application/json:
+    #         schema:
+    #           type: array
+    #           items:
+    #             $ref: '#/components/schemas/Vm'
+    #   500:
+    #     $ref: '#/components/responses/Error'
     Add-PodeRoute -Method Get -Path '/vms' -ScriptBlock {
         try {
             $vms = Get-HvoVms
@@ -15,9 +29,30 @@ function global:Add-HvoVmRoutes {
             }
         }
     }
-    #
-    # GET /vms/:name
-    #
+    # @openapi
+    # path: /vms/{name}
+    # method: GET
+    # summary: Récupère les détails d'une VM
+    # description: Retourne les informations détaillées d'une machine virtuelle spécifique
+    # tags: [VMs]
+    # parameters:
+    #   - name: name
+    #     in: path
+    #     required: true
+    #     schema:
+    #       type: string
+    #     description: Nom de la VM
+    # responses:
+    #   200:
+    #     description: Détails de la VM
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: '#/components/schemas/Vm'
+    #   404:
+    #     $ref: '#/components/responses/NotFound'
+    #   500:
+    #     $ref: '#/components/responses/Error'
     Add-PodeRoute -Method Get -Path '/vms/:name' -ScriptBlock {
         try {
             $name = $WebEvent.Parameters['name']
@@ -40,10 +75,41 @@ function global:Add-HvoVmRoutes {
         }
     }
 
-    #
-    # POST /vms
-    #
-
+    # @openapi
+    # path: /vms
+    # method: POST
+    # summary: Crée une nouvelle machine virtuelle
+    # description: Opération idempotente. Si la VM existe déjà, retourne 200 au lieu de 201.
+    # tags: [VMs]
+    # requestBody:
+    #   required: true
+    #   content:
+    #     application/json:
+    #       schema:
+    #         $ref: '#/components/schemas/VmCreateRequest'
+    # responses:
+    #   201:
+    #     description: VM créée
+    #     content:
+    #       application/json:
+    #         schema:
+    #           type: object
+    #           properties:
+    #             created:
+    #               type: string
+    #   200:
+    #     description: VM existe déjà
+    #     content:
+    #       application/json:
+    #         schema:
+    #           type: object
+    #           properties:
+    #             exists:
+    #               type: string
+    #   400:
+    #     $ref: '#/components/responses/BadRequest'
+    #   500:
+    #     $ref: '#/components/responses/Error'
     Add-PodeRoute -Method Post -Path '/vms' -ScriptBlock {
         try {
             $b = Get-HvoJsonBody
@@ -74,10 +140,44 @@ function global:Add-HvoVmRoutes {
         }
     }
 
-    #
-    # PUT /vms/:name
-    #
-
+    # @openapi
+    # path: /vms/{name}
+    # method: PUT
+    # summary: Met à jour une machine virtuelle
+    # description: Met à jour les propriétés d'une VM existante. Opération idempotente.
+    # tags: [VMs]
+    # parameters:
+    #   - name: name
+    #     in: path
+    #     required: true
+    #     schema:
+    #       type: string
+    #     description: Nom de la VM
+    # requestBody:
+    #   required: true
+    #   content:
+    #     application/json:
+    #       schema:
+    #         $ref: '#/components/schemas/VmUpdateRequest'
+    # responses:
+    #   200:
+    #     description: VM mise à jour ou inchangée
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: '#/components/schemas/VmActionResponse'
+    #   404:
+    #     $ref: '#/components/responses/NotFound'
+    #   409:
+    #     description: Conflit (ex: VM en cours d'exécution)
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: '#/components/schemas/Error'
+    #   400:
+    #     $ref: '#/components/responses/BadRequest'
+    #   500:
+    #     $ref: '#/components/responses/Error'
     Add-PodeRoute -Method Put -Path '/vms/:name' -ScriptBlock {
         try {
             $name = $WebEvent.Parameters['name']
@@ -141,11 +241,33 @@ function global:Add-HvoVmRoutes {
         }
     }
 
-
-
-    #
-    # DELETE /vms/:name
-    #
+    # @openapi
+    # path: /vms/{name}
+    # method: DELETE
+    # summary: Supprime une machine virtuelle
+    # description: Supprime une VM et ses disques associés. Opération idempotente.
+    # tags: [VMs]
+    # parameters:
+    #   - name: name
+    #     in: path
+    #     required: true
+    #     schema:
+    #       type: string
+    #     description: Nom de la VM
+    # responses:
+    #   200:
+    #     description: VM supprimée
+    #     content:
+    #       application/json:
+    #         schema:
+    #           type: object
+    #           properties:
+    #             deleted:
+    #               type: string
+    #   404:
+    #     $ref: '#/components/responses/NotFound'
+    #   500:
+    #     $ref: '#/components/responses/Error'
     Add-PodeRoute -Method Delete -Path '/vms/:name' -ScriptBlock {
         try {
             $name = $WebEvent.Parameters['name']
@@ -170,10 +292,33 @@ function global:Add-HvoVmRoutes {
         }
     }
 
-
-    #
-    # POST /vms/:name/start
-    #
+    # @openapi
+    # path: /vms/{name}/start
+    # method: POST
+    # summary: Démarre une machine virtuelle
+    # description: Démarre une VM. Opération idempotente.
+    # tags: [VMs]
+    # parameters:
+    #   - name: name
+    #     in: path
+    #     required: true
+    #     schema:
+    #       type: string
+    #     description: Nom de la VM
+    # responses:
+    #   200:
+    #     description: VM démarrée
+    #     content:
+    #       application/json:
+    #         schema:
+    #           type: object
+    #           properties:
+    #             started:
+    #               type: string
+    #   404:
+    #     $ref: '#/components/responses/NotFound'
+    #   500:
+    #     $ref: '#/components/responses/Error'
     Add-PodeRoute -Method Post -Path '/vms/:name/start' -ScriptBlock {
         try {
             $name = $WebEvent.Parameters['name']
@@ -198,10 +343,61 @@ function global:Add-HvoVmRoutes {
         }
     }
 
-
-    #
-    # POST /vms/:name/stop
-    #
+    # @openapi
+    # path: /vms/{name}/stop
+    # method: POST
+    # summary: Arrête une machine virtuelle
+    # description: Arrête une VM de manière gracieuse ou forcée. Opération idempotente.
+    # tags: [VMs]
+    # parameters:
+    #   - name: name
+    #     in: path
+    #     required: true
+    #     schema:
+    #       type: string
+    #     description: Nom de la VM
+    #   - name: force
+    #     in: query
+    #     required: false
+    #     schema:
+    #       type: boolean
+    #     description: Force l'arrêt si true
+    # requestBody:
+    #   required: false
+    #   content:
+    #     application/json:
+    #       schema:
+    #         type: object
+    #         properties:
+    #           force:
+    #             type: boolean
+    #             description: Force l'arrêt si true
+    # responses:
+    #   200:
+    #     description: VM arrêtée
+    #     content:
+    #       application/json:
+    #         schema:
+    #           type: object
+    #           properties:
+    #             stopped:
+    #               type: string
+    #   404:
+    #     $ref: '#/components/responses/NotFound'
+    #   409:
+    #     description: VM déjà arrêtée
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: '#/components/schemas/Error'
+    #   422:
+    #     description: Service d'intégration d'arrêt non disponible
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: '#/components/schemas/Error'
+    #   500:
+    #     $ref: '#/components/responses/Error'
     Add-PodeRoute -Method Post -Path '/vms/:name/stop' -ScriptBlock {
         try {
             $name = $WebEvent.Parameters['name']
@@ -259,10 +455,55 @@ function global:Add-HvoVmRoutes {
         }
     }
 
-
-    #
-    # POST /vms/:name/restart
-    #
+    # @openapi
+    # path: /vms/{name}/restart
+    # method: POST
+    # summary: Redémarre une machine virtuelle
+    # description: Redémarre une VM de manière gracieuse ou forcée. Si la VM est arrêtée, elle sera démarrée. Opération idempotente.
+    # tags: [VMs]
+    # parameters:
+    #   - name: name
+    #     in: path
+    #     required: true
+    #     schema:
+    #       type: string
+    #     description: Nom de la VM
+    #   - name: force
+    #     in: query
+    #     required: false
+    #     schema:
+    #       type: boolean
+    #     description: Force le redémarrage si true
+    # requestBody:
+    #   required: false
+    #   content:
+    #     application/json:
+    #       schema:
+    #         type: object
+    #         properties:
+    #           force:
+    #             type: boolean
+    #             description: Force le redémarrage si true
+    # responses:
+    #   200:
+    #     description: VM redémarrée
+    #     content:
+    #       application/json:
+    #         schema:
+    #           type: object
+    #           properties:
+    #             restarted:
+    #               type: string
+    #   404:
+    #     $ref: '#/components/responses/NotFound'
+    #   422:
+    #     description: Service d'intégration d'arrêt non disponible
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: '#/components/schemas/Error'
+    #   500:
+    #     $ref: '#/components/responses/Error'
     Add-PodeRoute -Method Post -Path '/vms/:name/restart' -ScriptBlock {
         try {
             $name = $WebEvent.Parameters['name']
@@ -313,10 +554,39 @@ function global:Add-HvoVmRoutes {
         }
     }
 
-
-    #
-    # POST /vms/:name/suspend
-    #
+    # @openapi
+    # path: /vms/{name}/suspend
+    # method: POST
+    # summary: Suspend une machine virtuelle
+    # description: Met en pause une VM. Opération idempotente.
+    # tags: [VMs]
+    # parameters:
+    #   - name: name
+    #     in: path
+    #     required: true
+    #     schema:
+    #       type: string
+    #     description: Nom de la VM
+    # responses:
+    #   200:
+    #     description: VM suspendue
+    #     content:
+    #       application/json:
+    #         schema:
+    #           type: object
+    #           properties:
+    #             suspended:
+    #               type: string
+    #   404:
+    #     $ref: '#/components/responses/NotFound'
+    #   409:
+    #     description: VM déjà suspendue
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: '#/components/schemas/Error'
+    #   500:
+    #     $ref: '#/components/responses/Error'
     Add-PodeRoute -Method Post -Path '/vms/:name/suspend' -ScriptBlock {
         try {
             $name = $WebEvent.Parameters['name']
@@ -348,10 +618,39 @@ function global:Add-HvoVmRoutes {
         }
     }
 
-
-    #
-    # POST /vms/:name/resume
-    #
+    # @openapi
+    # path: /vms/{name}/resume
+    # method: POST
+    # summary: Reprend une machine virtuelle
+    # description: Reprend l'exécution d'une VM suspendue. Opération idempotente.
+    # tags: [VMs]
+    # parameters:
+    #   - name: name
+    #     in: path
+    #     required: true
+    #     schema:
+    #       type: string
+    #     description: Nom de la VM
+    # responses:
+    #   200:
+    #     description: VM reprise
+    #     content:
+    #       application/json:
+    #         schema:
+    #           type: object
+    #           properties:
+    #             resumed:
+    #               type: string
+    #   404:
+    #     $ref: '#/components/responses/NotFound'
+    #   409:
+    #     description: VM déjà en cours d'exécution
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: '#/components/schemas/Error'
+    #   500:
+    #     $ref: '#/components/responses/Error'
     Add-PodeRoute -Method Post -Path '/vms/:name/resume' -ScriptBlock {
         try {
             $name = $WebEvent.Parameters['name']
