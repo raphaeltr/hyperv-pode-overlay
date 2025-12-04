@@ -14,6 +14,7 @@ try {
     . "$PSScriptRoot/routes/common.ps1"
     . "$PSScriptRoot/routes/vms.ps1"
     . "$PSScriptRoot/routes/switches.ps1"
+    . "$PSScriptRoot/routes/openapi.ps1"
 }
 catch {
     Write-Host "Error loading: $($_.Exception.Message)" -ForegroundColor Red
@@ -40,4 +41,5 @@ Start-PodeServer {
     Add-HvoCommonRoutes
     Add-HvoVmRoutes
     Add-HvoSwitchRoutes
+    Add-HvoOpenApiRoutes
 }

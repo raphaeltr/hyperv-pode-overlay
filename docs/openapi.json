@@ -1,208 +1,159 @@
 {
   "paths": {
-    "/vms/{name}/stop": {
+    "/vms/{name}/restart": {
       "post": {
-        "description": "Arrête une VM de manière gracieuse ou forcée. Opération idempotente.",
-        "parameters": [
-          {
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Nom de la VM",
-            "name": "name"
-          },
-          {
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean"
-            },
-            "description": "Force l'arrêt si true",
-            "name": "force"
-          }
+        "description": "Redémarre une VM de manière gracieuse ou forcée. Si la VM est arrêtée, elle sera démarrée. Opération idempotente.",
+        "tags": [
+          "VMs"
         ],
+        "summary": "Redémarre une machine virtuelle",
+        "responses": {
+          "422": {
+            "description": "Service d'intégration d'arrêt non disponible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "200": {
+            "description": "VM redémarrée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "restarted": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
         "requestBody": {
           "required": false,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "properties": {
                   "force": {
-                    "description": "Force l'arrêt si true",
+                    "description": "Force le redémarrage si true",
                     "type": "boolean"
                   }
-                }
+                },
+                "type": "object"
               }
             }
           }
         },
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "description": "Nom de la VM",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "force",
+            "required": false,
+            "description": "Force le redémarrage si true",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ]
+      }
+    },
+    "/vms/{name}/start": {
+      "post": {
+        "description": "Démarre une VM. Opération idempotente.",
         "tags": [
           "VMs"
         ],
+        "summary": "Démarre une machine virtuelle",
         "responses": {
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "VM déjà arrêtée"
-          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "Service d'intégration d'arrêt non disponible"
-          },
           "200": {
+            "description": "VM démarrée",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "properties": {
-                    "stopped": {
+                    "started": {
                       "type": "string"
                     }
-                  }
+                  },
+                  "type": "object"
                 }
               }
-            },
-            "description": "VM arrêtée"
+            }
           },
           "500": {
             "$ref": "#/components/responses/Error"
           }
         },
-        "summary": "Arrête une machine virtuelle"
-      }
-    },
-    "/health": {
-      "get": {
-        "description": "Retourne l'état de santé du serveur et sa configuration",
-        "tags": [
-          "Health"
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HealthResponse"
-                }
-              }
-            },
-            "description": "Serveur opérationnel"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error"
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "description": "Nom de la VM",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
           }
-        },
-        "summary": "Vérifie l'état du serveur API"
+        ]
       }
     },
     "/switches/{name}": {
-      "get": {
-        "description": "Retourne les informations détaillées d'un switch virtuel spécifique",
-        "parameters": [
-          {
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Nom du switch",
-            "name": "name"
-          }
-        ],
-        "tags": [
-          "Switches"
-        ],
-        "responses": {
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Switch"
-                }
-              }
-            },
-            "description": "Détails du switch"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error"
-          }
-        },
-        "summary": "Récupère les détails d'un switch"
-      },
-      "delete": {
-        "description": "Supprime un switch virtuel. Opération idempotente.",
-        "parameters": [
-          {
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Nom du switch",
-            "name": "name"
-          }
-        ],
-        "tags": [
-          "Switches"
-        ],
-        "responses": {
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "deleted": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "description": "Switch supprimé"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error"
-          }
-        },
-        "summary": "Supprime un switch virtuel"
-      },
       "put": {
         "description": "Met à jour les notes d'un switch. Seul le champ notes est modifiable. Opération idempotente.",
-        "parameters": [
-          {
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Nom du switch",
-            "name": "name"
-          }
+        "tags": [
+          "Switches"
         ],
+        "summary": "Met à jour un switch virtuel",
+        "responses": {
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "200": {
+            "description": "Switch mis à jour",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "updated": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
         "requestBody": {
           "required": true,
           "content": {
@@ -213,182 +164,540 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "description": "Nom du switch",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "description": "Supprime un switch virtuel. Opération idempotente.",
         "tags": [
           "Switches"
         ],
+        "summary": "Supprime un switch virtuel",
         "responses": {
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
           "200": {
+            "description": "Switch supprimé",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "properties": {
-                    "updated": {
+                    "deleted": {
                       "type": "string"
                     }
-                  }
+                  },
+                  "type": "object"
                 }
               }
-            },
-            "description": "Switch mis à jour"
+            }
           },
           "500": {
             "$ref": "#/components/responses/Error"
           }
         },
-        "summary": "Met à jour un switch virtuel"
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "description": "Nom du switch",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "get": {
+        "description": "Retourne les informations détaillées d'un switch virtuel spécifique",
+        "tags": [
+          "Switches"
+        ],
+        "summary": "Récupère les détails d'un switch",
+        "responses": {
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "200": {
+            "description": "Détails du switch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Switch"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "description": "Nom du switch",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "Retourne l'état de santé du serveur et sa configuration",
+        "tags": [
+          "Health"
+        ],
+        "summary": "Vérifie l'état du serveur API",
+        "responses": {
+          "200": {
+            "description": "Serveur opérationnel",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
       }
     },
     "/vms/{name}/suspend": {
       "post": {
         "description": "Met en pause une VM. Opération idempotente.",
-        "parameters": [
-          {
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Nom de la VM",
-            "name": "name"
-          }
-        ],
         "tags": [
           "VMs"
         ],
+        "summary": "Suspend une machine virtuelle",
         "responses": {
           "409": {
+            "description": "VM déjà suspendue",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
-            },
-            "description": "VM déjà suspendue"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
+            }
           },
           "200": {
+            "description": "VM suspendue",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "properties": {
                     "suspended": {
                       "type": "string"
                     }
-                  }
+                  },
+                  "type": "object"
                 }
               }
-            },
-            "description": "VM suspendue"
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           },
           "500": {
             "$ref": "#/components/responses/Error"
           }
         },
-        "summary": "Suspend une machine virtuelle"
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "description": "Nom de la VM",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/switches": {
+      "post": {
+        "description": "Crée un switch virtuel (Internal, Private ou External). Opération idempotente. Si le switch existe déjà, retourne 200 au lieu de 201.",
+        "tags": [
+          "Switches"
+        ],
+        "summary": "Crée un nouveau switch virtuel",
+        "responses": {
+          "201": {
+            "description": "Switch créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "created": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Switch existe déjà",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "exists": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchCreateRequest"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Retourne la liste complète des switches virtuels",
+        "tags": [
+          "Switches"
+        ],
+        "summary": "Liste tous les switches virtuels",
+        "responses": {
+          "200": {
+            "description": "Liste des switches",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Switch"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/vms/{name}/stop": {
+      "post": {
+        "description": "Arrête une VM de manière gracieuse ou forcée. Opération idempotente.",
+        "tags": [
+          "VMs"
+        ],
+        "summary": "Arrête une machine virtuelle",
+        "responses": {
+          "422": {
+            "description": "Service d'intégration d'arrêt non disponible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VM déjà arrêtée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "VM arrêtée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "stopped": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "force": {
+                    "description": "Force l'arrêt si true",
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "description": "Nom de la VM",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "force",
+            "required": false,
+            "description": "Force l'arrêt si true",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ]
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "description": "Génère et retourne la spécification OpenAPI complète de l'API à partir des commentaires inline",
+        "tags": [
+          "Documentation"
+        ],
+        "summary": "Retourne la spécification OpenAPI",
+        "responses": {
+          "200": {
+            "description": "Spécification OpenAPI",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/vms": {
+      "post": {
+        "description": "Opération idempotente. Si la VM existe déjà, retourne 200 au lieu de 201.",
+        "tags": [
+          "VMs"
+        ],
+        "summary": "Crée une nouvelle machine virtuelle",
+        "responses": {
+          "201": {
+            "description": "VM créée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "created": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "VM existe déjà",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "exists": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VmCreateRequest"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Retourne la liste complète des VMs avec leur état actuel",
+        "tags": [
+          "VMs"
+        ],
+        "summary": "Liste toutes les machines virtuelles",
+        "responses": {
+          "200": {
+            "description": "Liste des VMs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Vm"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/vms/{name}/resume": {
+      "post": {
+        "description": "Reprend l'exécution d'une VM suspendue. Opération idempotente.",
+        "tags": [
+          "VMs"
+        ],
+        "summary": "Reprend une machine virtuelle",
+        "responses": {
+          "409": {
+            "description": "VM déjà en cours d'exécution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "VM reprise",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "resumed": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "description": "Nom de la VM",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/vms/{name}": {
-      "get": {
-        "description": "Retourne les informations détaillées d'une machine virtuelle spécifique",
-        "parameters": [
-          {
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Nom de la VM",
-            "name": "name"
-          }
-        ],
-        "tags": [
-          "VMs"
-        ],
-        "responses": {
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Vm"
-                }
-              }
-            },
-            "description": "Détails de la VM"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error"
-          }
-        },
-        "summary": "Récupère les détails d'une VM"
-      },
-      "delete": {
-        "description": "Supprime une VM et ses disques associés. Opération idempotente.",
-        "parameters": [
-          {
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Nom de la VM",
-            "name": "name"
-          }
-        ],
-        "tags": [
-          "VMs"
-        ],
-        "responses": {
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "deleted": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "description": "VM supprimée"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error"
-          }
-        },
-        "summary": "Supprime une machine virtuelle"
-      },
       "put": {
         "description": "Met à jour les propriétés d'une VM existante. Opération idempotente.",
-        "parameters": [
-          {
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Nom de la VM",
-            "name": "name"
-          }
+        "tags": [
+          "VMs"
         ],
+        "summary": "Met à jour une machine virtuelle",
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "description": "Conflit (ex: VM en cours d'exécution)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "VM mise à jour ou inchangée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VmActionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
         "requestBody": {
           "required": true,
           "content": {
@@ -399,454 +708,159 @@
             }
           }
         },
-        "tags": [
-          "VMs"
-        ],
-        "responses": {
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "Conflit (ex: VM en cours d'exécution)"
-          },
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VmActionResponse"
-                }
-              }
-            },
-            "description": "VM mise à jour ou inchangée"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error"
-          }
-        },
-        "summary": "Met à jour une machine virtuelle"
-      }
-    },
-    "/vms/{name}/resume": {
-      "post": {
-        "description": "Reprend l'exécution d'une VM suspendue. Opération idempotente.",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "required": true,
+            "description": "Nom de la VM",
+            "in": "path",
             "schema": {
               "type": "string"
-            },
-            "description": "Nom de la VM",
-            "name": "name"
+            }
           }
-        ],
+        ]
+      },
+      "delete": {
+        "description": "Supprime une VM et ses disques associés. Opération idempotente.",
         "tags": [
           "VMs"
         ],
+        "summary": "Supprime une machine virtuelle",
         "responses": {
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "VM déjà en cours d'exécution"
-          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
           "200": {
+            "description": "VM supprimée",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "properties": {
-                    "resumed": {
+                    "deleted": {
                       "type": "string"
                     }
-                  }
+                  },
+                  "type": "object"
                 }
-              }
-            },
-            "description": "VM reprise"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error"
-          }
-        },
-        "summary": "Reprend une machine virtuelle"
-      }
-    },
-    "/switches": {
-      "post": {
-        "description": "Crée un switch virtuel (Internal, Private ou External). Opération idempotente. Si le switch existe déjà, retourne 200 au lieu de 201.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SwitchCreateRequest"
               }
             }
-          }
-        },
-        "tags": [
-          "Switches"
-        ],
-        "responses": {
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "exists": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "description": "Switch existe déjà"
-          },
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "created": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "description": "Switch créé"
           },
           "500": {
             "$ref": "#/components/responses/Error"
           }
         },
-        "summary": "Crée un nouveau switch virtuel"
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "description": "Nom de la VM",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       },
       "get": {
-        "description": "Retourne la liste complète des switches virtuels",
-        "tags": [
-          "Switches"
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Switch"
-                  }
-                }
-              }
-            },
-            "description": "Liste des switches"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error"
-          }
-        },
-        "summary": "Liste tous les switches virtuels"
-      }
-    },
-    "/vms/{name}/start": {
-      "post": {
-        "description": "Démarre une VM. Opération idempotente.",
-        "parameters": [
-          {
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Nom de la VM",
-            "name": "name"
-          }
-        ],
+        "description": "Retourne les informations détaillées d'une machine virtuelle spécifique",
         "tags": [
           "VMs"
         ],
+        "summary": "Récupère les détails d'une VM",
         "responses": {
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
           "200": {
+            "description": "Détails de la VM",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "started": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Vm"
                 }
               }
-            },
-            "description": "VM démarrée"
+            }
           },
           "500": {
             "$ref": "#/components/responses/Error"
           }
         },
-        "summary": "Démarre une machine virtuelle"
-      }
-    },
-    "/vms/{name}/restart": {
-      "post": {
-        "description": "Redémarre une VM de manière gracieuse ou forcée. Si la VM est arrêtée, elle sera démarrée. Opération idempotente.",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "required": true,
+            "description": "Nom de la VM",
+            "in": "path",
             "schema": {
               "type": "string"
-            },
-            "description": "Nom de la VM",
-            "name": "name"
-          },
-          {
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean"
-            },
-            "description": "Force le redémarrage si true",
-            "name": "force"
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "force": {
-                    "description": "Force le redémarrage si true",
-                    "type": "boolean"
-                  }
-                }
-              }
             }
           }
-        },
-        "tags": [
-          "VMs"
-        ],
-        "responses": {
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "Service d'intégration d'arrêt non disponible"
-          },
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "restarted": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "description": "VM redémarrée"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error"
-          }
-        },
-        "summary": "Redémarre une machine virtuelle"
-      }
-    },
-    "/vms": {
-      "post": {
-        "description": "Opération idempotente. Si la VM existe déjà, retourne 200 au lieu de 201.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VmCreateRequest"
-              }
-            }
-          }
-        },
-        "tags": [
-          "VMs"
-        ],
-        "responses": {
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "exists": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "description": "VM existe déjà"
-          },
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "created": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "description": "VM créée"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error"
-          }
-        },
-        "summary": "Crée une nouvelle machine virtuelle"
-      },
-      "get": {
-        "description": "Retourne la liste complète des VMs avec leur état actuel",
-        "tags": [
-          "VMs"
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Vm"
-                  }
-                }
-              }
-            },
-            "description": "Liste des VMs"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error"
-          }
-        },
-        "summary": "Liste toutes les machines virtuelles"
+        ]
       }
     }
   },
+  "openapi": "3.0.3",
   "info": {
     "version": "1.0.0",
     "description": "REST API layer on top of Microsoft Hyper-V using PowerShell and Pode",
     "title": "Hyper-V API Overlay"
   },
-  "openapi": "3.0.3",
-  "servers": [
-    {
-      "url": "http://0.0.0.0:8080",
-      "description": "Hyper-V Host API Server"
-    }
-  ],
   "components": {
+    "responses": {
+      "Error": {
+        "description": "Erreur serveur",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Requête invalide",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Ressource non trouvée",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
     "schemas": {
-      "VmActionResponse": {
+      "VmCreateRequest": {
+        "required": [
+          "name",
+          "memoryMB",
+          "vcpu",
+          "diskPath",
+          "diskGB",
+          "switchName"
+        ],
         "properties": {
-          "resumed": {
+          "switchName": {
+            "description": "Nom du switch virtuel",
             "type": "string"
           },
-          "deleted": {
-            "type": "string"
-          },
-          "unchanged": {
-            "type": "boolean"
-          },
-          "restarted": {
-            "type": "string"
-          },
-          "started": {
-            "type": "string"
-          },
-          "created": {
-            "type": "string"
-          },
-          "stopped": {
-            "type": "string"
-          },
-          "suspended": {
-            "type": "string"
-          },
-          "exists": {
-            "type": "string"
+          "vcpu": {
+            "description": "Nombre de vCPU",
+            "type": "integer"
           },
           "name": {
+            "description": "Nom de la VM",
             "type": "string"
           },
-          "updated": {
-            "type": "boolean"
-          }
-        },
-        "type": "object"
-      },
-      "HealthResponse": {
-        "properties": {
-          "time": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "config": {
-            "type": "object"
-          },
-          "root": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "VmCreateRequest": {
-        "properties": {
           "diskGB": {
             "description": "Taille du disque en GB",
             "type": "integer"
@@ -859,50 +873,152 @@
             "description": "Chemin vers l'ISO (optionnel)",
             "type": "string"
           },
-          "vcpu": {
-            "description": "Nombre de vCPU",
-            "type": "integer"
-          },
           "memoryMB": {
             "description": "Mémoire en MB",
             "type": "integer"
-          },
-          "name": {
-            "description": "Nom de la VM",
+          }
+        },
+        "type": "object"
+      },
+      "Error": {
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "description": "Message d'erreur lisible",
             "type": "string"
           },
-          "switchName": {
-            "description": "Nom du switch virtuel",
+          "detail": {
+            "description": "Message technique optionnel",
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "Vm": {
+        "properties": {
+          "State": {
+            "type": "string"
+          },
+          "MemoryAssigned": {
+            "type": "integer"
+          },
+          "CPUUsage": {
+            "type": "integer"
+          },
+          "Name": {
+            "type": "string"
+          },
+          "Uptime": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "root": {
+            "type": "string"
+          },
+          "time": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "config": {
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "VmActionResponse": {
+        "properties": {
+          "restarted": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "string"
+          },
+          "unchanged": {
+            "type": "boolean"
+          },
+          "stopped": {
+            "type": "string"
+          },
+          "started": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "resumed": {
+            "type": "string"
+          },
+          "exists": {
+            "type": "string"
+          },
+          "suspended": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SwitchCreateRequest": {
         "required": [
           "name",
-          "memoryMB",
-          "vcpu",
-          "diskPath",
-          "diskGB",
-          "switchName"
+          "type"
         ],
+        "properties": {
+          "netAdapterName": {
+            "description": "Nom de l'adaptateur réseau (requis pour External)",
+            "type": "string"
+          },
+          "notes": {
+            "description": "Notes optionnelles",
+            "type": "string"
+          },
+          "name": {
+            "description": "Nom du switch",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "Internal",
+              "Private",
+              "External"
+            ],
+            "description": "Type de switch",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "VmUpdateRequest": {
         "properties": {
-          "vcpu": {
-            "description": "Nombre de vCPU",
-            "type": "integer"
-          },
-          "memoryMB": {
-            "description": "Mémoire en MB",
-            "type": "integer"
+          "switchName": {
+            "description": "Nom du switch virtuel",
+            "type": "string"
           },
           "isoPath": {
             "description": "Chemin vers l'ISO",
             "type": "string"
           },
-          "switchName": {
-            "description": "Nom du switch virtuel",
-            "type": "string"
+          "vcpu": {
+            "description": "Nombre de vCPU",
+            "type": "integer"
+          },
+          "memoryMB": {
+            "description": "Mémoire en MB",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -934,105 +1050,13 @@
           }
         },
         "type": "object"
-      },
-      "SwitchCreateRequest": {
-        "properties": {
-          "netAdapterName": {
-            "description": "Nom de l'adaptateur réseau (requis pour External)",
-            "type": "string"
-          },
-          "notes": {
-            "description": "Notes optionnelles",
-            "type": "string"
-          },
-          "type": {
-            "description": "Type de switch",
-            "type": "string",
-            "enum": [
-              "Internal",
-              "Private",
-              "External"
-            ]
-          },
-          "name": {
-            "description": "Nom du switch",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "type"
-        ],
-        "type": "object"
-      },
-      "Vm": {
-        "properties": {
-          "State": {
-            "type": "string"
-          },
-          "CPUUsage": {
-            "type": "integer"
-          },
-          "Uptime": {
-            "type": "string"
-          },
-          "MemoryAssigned": {
-            "type": "integer"
-          },
-          "Name": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "Error": {
-        "properties": {
-          "detail": {
-            "description": "Message technique optionnel",
-            "type": "string"
-          },
-          "error": {
-            "description": "Message d'erreur lisible",
-            "type": "string"
-          }
-        },
-        "required": [
-          "error"
-        ],
-        "type": "object"
-      }
-    },
-    "responses": {
-      "Error": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        },
-        "description": "Erreur serveur"
-      },
-      "BadRequest": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        },
-        "description": "Requête invalide"
-      },
-      "NotFound": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        },
-        "description": "Ressource non trouvée"
       }
     }
-  }
+  },
+  "servers": [
+    {
+      "description": "Hyper-V Host API Server",
+      "url": "http://0.0.0.0:8080"
+    }
+  ]
 }
