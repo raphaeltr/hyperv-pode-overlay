@@ -82,55 +82,39 @@ function global:Add-HvoSwitchRoutes {
     #
     # PUT /switches/:name
     #
-    function Set-HvoSwitch {
-    param(
-        [Parameter(Mandatory)] [string] $Name,
-        [string] $Notes
-    )
+    Add-PodeRoute -Method Put -Path '/switches/:name' -ScriptBlock {
+        try {
+            $name = $WebEvent.Parameters['name']
+            $body = Get-HvoJsonBody
 
-    try {
-        $sw = Get-VMSwitch -Name $Name -ErrorAction SilentlyContinue
-        if (-not $sw) {
-            return @{
-                Found = $false
-                Updated = $false
-                Name = $Name
+            if (-not $body) {
+                Write-PodeJsonResponse -StatusCode 400 -Value @{ error = "Invalid JSON" }
+                return
             }
+
+            # Only pass fields that the user provided
+            $params = @{ Name = $name }
+
+            if ($body.notes) {
+                $params.Notes = $body.notes
+            }
+
+            $result = Set-HvoSwitch @params
+
+            if (-not $result.Updated) {
+                Write-PodeJsonResponse -StatusCode 404 -Value $result
+                return
+            }
+
+            Write-PodeJsonResponse -Value @{ updated = $result.Name }
         }
-
-        # Detect if Notes actually changed
-        $currentNotes = $sw.Notes
-        $requestedNotes = $Notes
-
-        if ($PSBoundParameters.ContainsKey("Notes")) {
-            if ($currentNotes -ne $requestedNotes) {
-                Set-VMSwitch -Name $Name -Notes $Notes -ErrorAction Stop
-                return @{
-                    Found   = $true
-                    Updated = $true
-                    Name    = $Name
-                }
+        catch {
+            Write-PodeJsonResponse -StatusCode 500 -Value @{
+                error  = "Failed to update switch"
+                detail = $_.Exception.Message
             }
-
-            # No change
-            return @{
-                Found   = $true
-                Updated = $false
-                Name    = $Name
-            }
-        }
-
-        # Nothing to update
-        return @{
-            Found = $true
-            Updated = $false
-            Name = $Name
         }
     }
-    catch {
-        throw $_
-    }
-}
 
 
 
