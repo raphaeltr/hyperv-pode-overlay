@@ -68,13 +68,9 @@ function Set-HvoVm {
     try {
         $vm = Get-VM -Name $Name -ErrorAction SilentlyContinue
         if (-not $vm) {
-            return @{
-                Updated = $false
-                Error   = "VM not found"
-            }
+            return @{ Updated = $false; Error = "VM not found" }
         }
 
-        # VM must be Off
         if ($vm.State -ne "Off") {
             return @{
                 Updated = $false
@@ -83,49 +79,72 @@ function Set-HvoVm {
             }
         }
 
+        $changed = $false
+
         #
-        # Update Memory
+        # MEMORY — update only if different
         #
         if ($PSBoundParameters.ContainsKey("MemoryMB")) {
-            Set-VMMemory -VMName $Name -StartupBytes ($MemoryMB * 1MB) -ErrorAction Stop
+            $currentMB = [math]::Round($vm.MemoryStartup / 1MB)
+            if ($currentMB -ne $MemoryMB) {
+                Set-VMMemory -VMName $Name -StartupBytes ($MemoryMB * 1MB) -ErrorAction Stop
+                $changed = $true
+            }
         }
 
         #
-        # Update vCPU
+        # vCPU — update only if different
         #
         if ($PSBoundParameters.ContainsKey("Vcpu")) {
-            Set-VMProcessor -VMName $Name -Count $Vcpu -ErrorAction Stop
+            if ($vm.ProcessorCount -ne $Vcpu) {
+                Set-VMProcessor -VMName $Name -Count $Vcpu -ErrorAction Stop
+                $changed = $true
+            }
         }
 
         #
-        # Update Switch
+        # SWITCH — update only if different
         #
         if ($PSBoundParameters.ContainsKey("SwitchName")) {
-            # Remove old NICs
-            Get-VMNetworkAdapter -VMName $Name | Remove-VMNetworkAdapter -Confirm:$false -ErrorAction Stop
+            $currentNic = Get-VMNetworkAdapter -VMName $Name -ErrorAction SilentlyContinue
+            $currentSwitch = $currentNic?.SwitchName
 
-            # Add new NIC
-            Add-VMNetworkAdapter -VMName $Name -SwitchName $SwitchName -ErrorAction Stop
+            if ($currentSwitch -ne $SwitchName) {
+                Get-VMNetworkAdapter -VMName $Name |
+                    Remove-VMNetworkAdapter -Confirm:$false -ErrorAction Stop
+
+                Add-VMNetworkAdapter -VMName $Name -SwitchName $SwitchName -ErrorAction Stop
+                $changed = $true
+            }
         }
 
         #
-        # Update ISO
+        # ISO — update only if different
         #
         if ($PSBoundParameters.ContainsKey("IsoPath")) {
 
             if (-not (Test-Path $IsoPath)) {
-                return @{
-                    Updated = $false
-                    Error   = "ISO file not found"
-                    Path    = $IsoPath
-                }
+                return @{ Updated = $false; Error = "ISO file not found"; Path = $IsoPath }
             }
 
-            # Remove existing DVD drives
-            Get-VMDvdDrive -VMName $Name | Remove-VMDvdDrive -ErrorAction Stop
+            $currentIso = (Get-VMDvdDrive -VMName $Name -ErrorAction SilentlyContinue)?.Path
 
-            # Attach new ISO
-            Add-VMDvdDrive -VMName $Name -Path $IsoPath -ErrorAction Stop
+            if ($currentIso -ne $IsoPath) {
+                Get-VMDvdDrive -VMName $Name | Remove-VMDvdDrive -ErrorAction Stop
+                Add-VMDvdDrive -VMName $Name -Path $IsoPath -ErrorAction Stop
+                $changed = $true
+            }
+        }
+
+        #
+        # No changes? → return idempotent response
+        #
+        if (-not $changed) {
+            return @{
+                Updated   = $false
+                Unchanged = $true
+                Name      = $Name
+            }
         }
 
         return @{
@@ -137,6 +156,7 @@ function Set-HvoVm {
         throw $_
     }
 }
+
 
 
 function Get-HvoVm {
