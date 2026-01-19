@@ -212,11 +212,11 @@ paths:
       summary: Get virtual machine details
       description: Returns detailed information about a specific virtual machine
       parameters:
-        - in: path
+        - name: name
           schema:
             type: string
           required: true
-          name: name
+          in: path
       responses:
         200:
           description: Virtual machine details
@@ -246,11 +246,11 @@ paths:
           Updates configuration of an existing virtual machine. VM must be stopped.
           Returns 200 with unchanged=true if no changes were needed
       parameters:
-        - in: path
+        - name: name
           schema:
             type: string
           required: true
-          name: name
+          in: path
       requestBody:
         content:
           application/json:
@@ -303,11 +303,11 @@ paths:
       summary: Delete a virtual machine
       description: Deletes a virtual machine and its associated virtual hard disks
       parameters:
-        - in: path
+        - name: name
           schema:
             type: string
           required: true
-          name: name
+          in: path
       responses:
         200:
           description: VM deleted successfully
@@ -341,11 +341,11 @@ paths:
       summary: Start a virtual machine
       description: Starts a virtual machine. If the VM is paused, it will be resumed
       parameters:
-        - in: path
+        - name: name
           schema:
             type: string
           required: true
-          name: name
+          in: path
       responses:
         200:
           description: VM started successfully
@@ -381,15 +381,15 @@ paths:
           Stops a virtual machine gracefully. Use force=true query parameter or body to
           force shutdown
       parameters:
-        - in: path
+        - name: name
           schema:
             type: string
           required: true
-          name: name
-        - in: query
+          in: path
+        - name: force
           schema:
             type: boolean
-          name: force
+          in: query
       requestBody:
         content:
           application/json:
@@ -445,15 +445,15 @@ paths:
           Restarts a virtual machine. Use force=true query parameter or body to force
           shutdown before restart
       parameters:
-        - in: path
+        - name: name
           schema:
             type: string
           required: true
-          name: name
-        - in: query
+          in: path
+        - name: force
           schema:
             type: boolean
-          name: force
+          in: query
       requestBody:
         content:
           application/json:
@@ -501,11 +501,11 @@ paths:
       summary: Suspend a virtual machine
       description: Suspends (pauses) a running virtual machine
       parameters:
-        - in: path
+        - name: name
           schema:
             type: string
           required: true
-          name: name
+          in: path
       responses:
         200:
           description: VM suspended successfully
@@ -545,11 +545,11 @@ paths:
       summary: Resume a virtual machine
       description: Resumes a suspended virtual machine
       parameters:
-        - in: path
+        - name: name
           schema:
             type: string
           required: true
-          name: name
+          in: path
       responses:
         200:
           description: VM resumed successfully
@@ -578,6 +578,57 @@ paths:
                 $ref: '#/components/schemas/ErrorSchema'
         500:
           description: Failed to resume VM
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorSchema'
+  /vms/{name}/network-adapters:
+    get:
+      tags:
+        - VMs
+      summary: List network adapters of a virtual machine
+      description: Returns a list of all network adapters for a specific virtual machine
+      parameters:
+        - name: name
+          schema:
+            type: string
+          required: true
+          in: path
+      responses:
+        200:
+          description: List of network adapters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    Name:
+                      type: string
+                    SwitchName:
+                      type: string
+                    Type:
+                      type: string
+                    MacAddress:
+                      type: string
+                    Status:
+                      type: string
+                  required:
+                    - Name
+                    - Type
+                    - MacAddress
+                    - Status
+        default:
+          description: Internal server error
+        404:
+          description: VM not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorSchema'
+        500:
+          description: Failed to list network adapters
           content:
             application/json:
               schema:
@@ -676,11 +727,11 @@ paths:
       summary: Get virtual switch details
       description: Returns detailed information about a specific virtual switch
       parameters:
-        - in: path
+        - name: name
           schema:
             type: string
           required: true
-          name: name
+          in: path
       responses:
         200:
           description: Virtual switch details
@@ -708,11 +759,11 @@ paths:
       summary: Update a virtual switch
       description: Updates the notes field of an existing virtual switch
       parameters:
-        - in: path
+        - name: name
           schema:
             type: string
           required: true
-          name: name
+          in: path
       requestBody:
         content:
           application/json:
@@ -757,11 +808,11 @@ paths:
       summary: Delete a virtual switch
       description: Deletes a virtual switch
       parameters:
-        - in: path
+        - name: name
           schema:
             type: string
           required: true
-          name: name
+          in: path
       responses:
         200:
           description: Switch deleted successfully

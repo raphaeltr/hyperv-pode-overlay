@@ -520,4 +520,48 @@ function Remove-HvoVm {
     }
 }
 
+function Get-HvoVmNetworkAdapters {
+    param(
+        [Parameter(Mandatory)] [string] $Name
+    )
+
+    try {
+        $vm = Get-VM -Name $Name -ErrorAction SilentlyContinue
+        if (-not $vm) {
+            return $null
+        }
+
+        $adapters = Get-VMNetworkAdapter -VMName $Name -ErrorAction SilentlyContinue
+        if (-not $adapters) {
+            return @()
+        }
+
+        # Handle both single adapter and array of adapters
+        if ($adapters -isnot [Array]) {
+            $adapters = @($adapters)
+        }
+
+        return $adapters | ForEach-Object {
+            $type = if ($_.IsLegacy) { "Legacy" } else { "Synthetic" }
+
+            [PSCustomObject]@{
+                Name       = $_.Name
+                SwitchName = $_.SwitchName
+                Type       = $type
+                MacAddress = $_.MacAddress
+                Status     = if ($null -ne $_.Status) { $_.Status.ToString() } else { $null }
+            }
+        }
+    }
+    catch {
+        $msg = $_.Exception.Message
+        if ($msg -match 'not found|does not exist|Cannot find') {
+            return $null
+        }
+
+        # Propagate the exception without display - the caller will handle the error
+        throw
+    }
+}
+
 Export-ModuleMember -Function *
