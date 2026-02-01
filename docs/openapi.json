@@ -331,12 +331,12 @@
         "description": "Returns detailed information about a specific virtual machine",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "schema": {
               "type": "string"
             },
             "required": true,
-            "name": "name"
+            "in": "path"
           }
         ],
         "responses": {
@@ -383,12 +383,12 @@
         "description": "Updates configuration of an existing virtual machine. VM must be stopped. Returns 200 with unchanged=true if no changes were needed",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "schema": {
               "type": "string"
             },
             "required": true,
-            "name": "name"
+            "in": "path"
           }
         ],
         "requestBody": {
@@ -476,12 +476,12 @@
         "description": "Deletes a virtual machine and its associated virtual hard disks",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "schema": {
               "type": "string"
             },
             "required": true,
-            "name": "name"
+            "in": "path"
           }
         ],
         "responses": {
@@ -538,12 +538,12 @@
         "description": "Starts a virtual machine. If the VM is paused, it will be resumed",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "schema": {
               "type": "string"
             },
             "required": true,
-            "name": "name"
+            "in": "path"
           }
         ],
         "responses": {
@@ -600,19 +600,19 @@
         "description": "Stops a virtual machine gracefully. Use force=true query parameter or body to force shutdown",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "schema": {
               "type": "string"
             },
             "required": true,
-            "name": "name"
+            "in": "path"
           },
           {
-            "in": "query",
+            "name": "force",
             "schema": {
               "type": "boolean"
             },
-            "name": "force"
+            "in": "query"
           }
         ],
         "requestBody": {
@@ -703,19 +703,19 @@
         "description": "Restarts a virtual machine. Use force=true query parameter or body to force shutdown before restart",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "schema": {
               "type": "string"
             },
             "required": true,
-            "name": "name"
+            "in": "path"
           },
           {
-            "in": "query",
+            "name": "force",
             "schema": {
               "type": "boolean"
             },
-            "name": "force"
+            "in": "query"
           }
         ],
         "requestBody": {
@@ -796,12 +796,12 @@
         "description": "Suspends (pauses) a running virtual machine",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "schema": {
               "type": "string"
             },
             "required": true,
-            "name": "name"
+            "in": "path"
           }
         ],
         "responses": {
@@ -868,12 +868,12 @@
         "description": "Resumes a suspended virtual machine",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "schema": {
               "type": "string"
             },
             "required": true,
-            "name": "name"
+            "in": "path"
           }
         ],
         "responses": {
@@ -920,6 +920,86 @@
           },
           "500": {
             "description": "Failed to resume VM",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vms/{name}/network-adapters": {
+      "get": {
+        "tags": [
+          "VMs"
+        ],
+        "summary": "List network adapters of a virtual machine",
+        "description": "Returns a list of all network adapters for a specific virtual machine",
+        "parameters": [
+          {
+            "name": "name",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of network adapters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "Name": {
+                        "type": "string"
+                      },
+                      "SwitchName": {
+                        "type": "string"
+                      },
+                      "Type": {
+                        "type": "string"
+                      },
+                      "MacAddress": {
+                        "type": "string"
+                      },
+                      "Status": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "Name",
+                      "Type",
+                      "MacAddress",
+                      "Status"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Internal server error"
+          },
+          "404": {
+            "description": "VM not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to list network adapters",
             "content": {
               "application/json": {
                 "schema": {
@@ -1075,12 +1155,12 @@
         "description": "Returns detailed information about a specific virtual switch",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "schema": {
               "type": "string"
             },
             "required": true,
-            "name": "name"
+            "in": "path"
           }
         ],
         "responses": {
@@ -1127,12 +1207,12 @@
         "description": "Updates the notes field of an existing virtual switch",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "schema": {
               "type": "string"
             },
             "required": true,
-            "name": "name"
+            "in": "path"
           }
         ],
         "requestBody": {
@@ -1207,12 +1287,12 @@
         "description": "Deletes a virtual switch",
         "parameters": [
           {
-            "in": "path",
+            "name": "name",
             "schema": {
               "type": "string"
             },
             "required": true,
-            "name": "name"
+            "in": "path"
           }
         ],
         "responses": {

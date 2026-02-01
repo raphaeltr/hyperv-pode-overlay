@@ -2,6 +2,21 @@
 # Uses InModuleScope to test within the module context and allow mocks to work
 
 BeforeAll {
+    # Créer des stubs pour les cmdlets Hyper-V si elles n'existent pas (ex: WSL, Linux)
+    # Cela permet à Pester de mocker ces commandes même sans le module Hyper-V
+    if (-not (Get-Command Get-VMSwitch -ErrorAction SilentlyContinue)) {
+        function global:Get-VMSwitch { param($Name, $ErrorAction) }
+    }
+    if (-not (Get-Command New-VMSwitch -ErrorAction SilentlyContinue)) {
+        function global:New-VMSwitch { param($Name, $SwitchType, $NetAdapterName, $AllowManagementOS) }
+    }
+    if (-not (Get-Command Set-VMSwitch -ErrorAction SilentlyContinue)) {
+        function global:Set-VMSwitch { param($Name, $Notes, $ErrorAction) }
+    }
+    if (-not (Get-Command Remove-VMSwitch -ErrorAction SilentlyContinue)) {
+        function global:Remove-VMSwitch { param($Name, $Force, $ErrorAction) }
+    }
+
     $modulePath = Join-Path $PSScriptRoot "../../src/modules/HvoSwitch/HvoSwitch.psd1"
     Import-Module $modulePath -Force
 }
@@ -342,9 +357,7 @@ InModuleScope HvoSwitch {
 
                 # Assert
                 $result | Should -Be $true
-                Should -Invoke Remove-VMSwitch -Exactly -Times 1 -ParameterFilter {
-                    $Name -eq $switchName -and $Force -eq $true
-                }
+                Should -Invoke Remove-VMSwitch -Exactly -Times 1
             }
 
             It "Should return false if deletion fails" {

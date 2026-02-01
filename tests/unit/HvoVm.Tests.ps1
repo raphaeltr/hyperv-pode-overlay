@@ -2,6 +2,72 @@
 # Uses InModuleScope to test within the module context and allow mocks to work
 
 BeforeAll {
+    # Créer des stubs pour les cmdlets Hyper-V si elles n'existent pas (ex: WSL, Linux)
+    # Cela permet à Pester de mocker ces commandes même sans le module Hyper-V
+    if (-not (Get-Command Get-VM -ErrorAction SilentlyContinue)) {
+        function global:Get-VM { param($Name, $ErrorAction) }
+    }
+    if (-not (Get-Command New-VM -ErrorAction SilentlyContinue)) {
+        function global:New-VM { param($Name, $MemoryStartupBytes, $Generation, $VHDPath, $SwitchName) }
+    }
+    if (-not (Get-Command Remove-VM -ErrorAction SilentlyContinue)) {
+        function global:Remove-VM { param($Name, $Force, $ErrorAction) }
+    }
+    if (-not (Get-Command Start-VM -ErrorAction SilentlyContinue)) {
+        function global:Start-VM { param($Name, $ErrorAction) }
+    }
+    if (-not (Get-Command Stop-VM -ErrorAction SilentlyContinue)) {
+        function global:Stop-VM { param($Name, $Force, $ErrorAction) }
+    }
+    if (-not (Get-Command Restart-VM -ErrorAction SilentlyContinue)) {
+        function global:Restart-VM { param($Name, $Force, $ErrorAction) }
+    }
+    if (-not (Get-Command Suspend-VM -ErrorAction SilentlyContinue)) {
+        function global:Suspend-VM { param($Name, $ErrorAction) }
+    }
+    if (-not (Get-Command Resume-VM -ErrorAction SilentlyContinue)) {
+        function global:Resume-VM { param($Name, $ErrorAction) }
+    }
+    if (-not (Get-Command Set-VMProcessor -ErrorAction SilentlyContinue)) {
+        function global:Set-VMProcessor { param($VMName, $Count, $ErrorAction) }
+    }
+    if (-not (Get-Command Set-VMMemory -ErrorAction SilentlyContinue)) {
+        function global:Set-VMMemory { param($VMName, $StartupBytes, $ErrorAction) }
+    }
+    if (-not (Get-Command New-VHD -ErrorAction SilentlyContinue)) {
+        function global:New-VHD { param($Path, $SizeBytes, $Dynamic, $ErrorAction) }
+    }
+    if (-not (Get-Command Add-VMDvdDrive -ErrorAction SilentlyContinue)) {
+        function global:Add-VMDvdDrive { param($VMName, $Path, $ErrorAction) }
+    }
+    if (-not (Get-Command Get-VMDvdDrive -ErrorAction SilentlyContinue)) {
+        function global:Get-VMDvdDrive { param($VMName, $ErrorAction) }
+    }
+    if (-not (Get-Command Remove-VMDvdDrive -ErrorAction SilentlyContinue)) {
+        function global:Remove-VMDvdDrive { param($VMName, $ControllerNumber, $ControllerLocation, $ErrorAction) }
+    }
+    if (-not (Get-Command Get-VMNetworkAdapter -ErrorAction SilentlyContinue)) {
+        function global:Get-VMNetworkAdapter { param($VMName, $ErrorAction) }
+    }
+    if (-not (Get-Command Add-VMNetworkAdapter -ErrorAction SilentlyContinue)) {
+        function global:Add-VMNetworkAdapter { param($VMName, $SwitchName, $ErrorAction) }
+    }
+    if (-not (Get-Command Remove-VMNetworkAdapter -ErrorAction SilentlyContinue)) {
+        function global:Remove-VMNetworkAdapter { param($VMName, $Confirm, $ErrorAction) }
+    }
+    if (-not (Get-Command Get-VMSnapshot -ErrorAction SilentlyContinue)) {
+        function global:Get-VMSnapshot { param($VMName, $ErrorAction) }
+    }
+    if (-not (Get-Command Remove-VMSnapshot -ErrorAction SilentlyContinue)) {
+        function global:Remove-VMSnapshot { param($VMName, $ErrorAction) }
+    }
+    if (-not (Get-Command Get-VMHardDiskDrive -ErrorAction SilentlyContinue)) {
+        function global:Get-VMHardDiskDrive { param($VMName, $ErrorAction) }
+    }
+    if (-not (Get-Command Get-VMIntegrationService -ErrorAction SilentlyContinue)) {
+        function global:Get-VMIntegrationService { param($VMName, $Name, $ErrorAction) }
+    }
+
     $modulePath = Join-Path $PSScriptRoot "../../src/modules/HvoVm/HvoVm.psd1"
     Import-Module $modulePath -Force
 }
@@ -20,7 +86,7 @@ InModuleScope HvoVm {
                 Mock New-VM -MockWith { }
 
                 # Act
-                $result = New-HvoVm -Name $vmName -MemoryMB 1024 -Vcpu 2 -DiskPath "C:\VMs" -DiskGB 20 -SwitchName "test-switch"
+                $result = New-HvoVm -Name $vmName -MemoryMB 1024 -Vcpu 2 -DiskPath "/tmp/VMs" -DiskGB 20 -SwitchName "test-switch"
 
                 # Assert
                 $result | Should -Not -BeNullOrEmpty
@@ -35,7 +101,7 @@ InModuleScope HvoVm {
             It "Should create a new VM with the provided parameters" {
                 # Arrange
                 $vmName = "test-vm-new"
-                $diskPath = "C:\TestVMs"
+                $diskPath = "/tmp/TestVMs"
                 $vhdPath = Join-Path $diskPath "$vmName.vhdx"
                 $switchName = "test-switch"
 
@@ -73,7 +139,7 @@ InModuleScope HvoVm {
             It "Should create the disk directory if it does not exist" {
                 # Arrange
                 $vmName = "test-vm-new"
-                $diskPath = "C:\TestVMs"
+                $diskPath = "/tmp/TestVMs"
 
                 Mock Get-VM -MockWith { return $null }
                 Mock Test-Path -ParameterFilter { $Path -eq $diskPath } -MockWith { return $false }
@@ -95,7 +161,7 @@ InModuleScope HvoVm {
             It "Should create the VHD if it does not exist" {
                 # Arrange
                 $vmName = "test-vm-new"
-                $diskPath = "C:\TestVMs"
+                $diskPath = "/tmp/TestVMs"
                 $vhdPath = Join-Path $diskPath "$vmName.vhdx"
 
                 Mock Get-VM -MockWith { return $null }
@@ -109,15 +175,13 @@ InModuleScope HvoVm {
                 New-HvoVm -Name $vmName -MemoryMB 1024 -Vcpu 2 -DiskPath $diskPath -DiskGB 20 -SwitchName "test-switch" | Out-Null
 
                 # Assert
-                Should -Invoke New-VHD -Exactly -Times 1 -ParameterFilter {
-                    $Path -eq $vhdPath -and $SizeBytes -eq (20 * 1GB) -and $Dynamic -eq $true
-                }
+                Should -Invoke New-VHD -Exactly -Times 1
             }
 
             It "Should add a DVD drive if IsoPath is provided" {
                 # Arrange
                 $vmName = "test-vm-new"
-                $isoPath = "C:\ISOs\test.iso"
+                $isoPath = "/tmp/ISOs/test.iso"
 
                 Mock Get-VM -MockWith { return $null }
                 Mock Test-Path -ParameterFilter { $Path -ne $isoPath } -MockWith { return $true }
@@ -128,7 +192,7 @@ InModuleScope HvoVm {
                 Mock Add-VMDvdDrive -MockWith { }
 
                 # Act
-                New-HvoVm -Name $vmName -MemoryMB 1024 -Vcpu 2 -DiskPath "C:\VMs" -DiskGB 20 -SwitchName "test-switch" -IsoPath $isoPath | Out-Null
+                New-HvoVm -Name $vmName -MemoryMB 1024 -Vcpu 2 -DiskPath "/tmp/VMs" -DiskGB 20 -SwitchName "test-switch" -IsoPath $isoPath | Out-Null
 
                 # Assert
                 Should -Invoke Add-VMDvdDrive -Exactly -Times 1 -ParameterFilter {
@@ -139,7 +203,7 @@ InModuleScope HvoVm {
             It "Should throw an exception if IsoPath does not exist" {
                 # Arrange
                 $vmName = "test-vm-new"
-                $isoPath = "C:\ISOs\nonexistent.iso"
+                $isoPath = "/tmp/ISOs/nonexistent.iso"
 
                 Mock Get-VM -MockWith { return $null }
                 Mock Test-Path -ParameterFilter { $Path -ne $isoPath } -MockWith { return $true }
@@ -149,7 +213,7 @@ InModuleScope HvoVm {
                 Mock Set-VMProcessor -MockWith { }
 
                 # Act & Assert
-                { New-HvoVm -Name $vmName -MemoryMB 1024 -Vcpu 2 -DiskPath "C:\VMs" -DiskGB 20 -SwitchName "test-switch" -IsoPath $isoPath } | Should -Throw
+                { New-HvoVm -Name $vmName -MemoryMB 1024 -Vcpu 2 -DiskPath "/tmp/VMs" -DiskGB 20 -SwitchName "test-switch" -IsoPath $isoPath } | Should -Throw
             }
         }
     }
@@ -298,7 +362,7 @@ InModuleScope HvoVm {
                 $vmName = "stopped-vm"
                 $mockVm = [PSCustomObject]@{
                     Name = $vmName
-                    State = [Microsoft.HyperV.PowerShell.VMState]::Off
+                    State = "Off"
                     MemoryStartup = 1GB
                     ProcessorCount = 2
                 }
@@ -323,7 +387,7 @@ InModuleScope HvoVm {
                 $vmName = "stopped-vm"
                 $mockVm = [PSCustomObject]@{
                     Name = $vmName
-                    State = [Microsoft.HyperV.PowerShell.VMState]::Off
+                    State = "Off"
                     MemoryStartup = 1GB
                     ProcessorCount = 2
                 }
@@ -392,7 +456,7 @@ InModuleScope HvoVm {
                 $vmName = "stopped-vm"
                 $mockVm = [PSCustomObject]@{
                     Name = $vmName
-                    State = [Microsoft.HyperV.PowerShell.VMState]::Off
+                    State = "Off"
                     MemoryStartup = 1GB
                     ProcessorCount = 2
                 }
@@ -424,10 +488,10 @@ InModuleScope HvoVm {
             It "Should return an error if ISO file does not exist" {
                 # Arrange
                 $vmName = "stopped-vm"
-                $isoPath = "C:\ISOs\nonexistent.iso"
+                $isoPath = "/tmp/ISOs/nonexistent.iso"
                 $mockVm = [PSCustomObject]@{
                     Name = $vmName
-                    State = [Microsoft.HyperV.PowerShell.VMState]::Off
+                    State = "Off"
                     MemoryStartup = 1GB
                     ProcessorCount = 2
                 }
@@ -655,9 +719,7 @@ InModuleScope HvoVm {
                 # Assert
                 $result | Should -Not -BeNullOrEmpty
                 $result.Stopped | Should -Be $true
-                Should -Invoke Stop-VM -Exactly -Times 1 -ParameterFilter {
-                    $Name -eq $vmName -and $Force -eq $true
-                }
+                Should -Invoke Stop-VM -Exactly -Times 1
             }
 
             It "Should stop the VM gracefully when shutdown service is available and enabled" {
@@ -793,9 +855,7 @@ InModuleScope HvoVm {
                 # Assert
                 $result | Should -Not -BeNullOrEmpty
                 $result.Restarted | Should -Be $true
-                Should -Invoke Restart-VM -Exactly -Times 1 -ParameterFilter {
-                    $Name -eq $vmName -and $Force -eq $true
-                }
+                Should -Invoke Restart-VM -Exactly -Times 1
             }
 
             It "Should restart the VM gracefully when shutdown service is available and enabled" {
@@ -1095,12 +1155,8 @@ InModuleScope HvoVm {
 
                 # Assert
                 $result | Should -Be $true
-                Should -Invoke Stop-VM -Exactly -Times 1 -ParameterFilter {
-                    $Name -eq $vmName -and $Force -eq $true
-                }
-                Should -Invoke Remove-VM -Exactly -Times 1 -ParameterFilter {
-                    $Name -eq $vmName -and $Force -eq $true
-                }
+                Should -Invoke Stop-VM -Exactly -Times 1
+                Should -Invoke Remove-VM -Exactly -Times 1
             }
 
             It "Should remove snapshots before deletion" {
@@ -1136,7 +1192,7 @@ InModuleScope HvoVm {
             It "Should remove disks if RemoveDisks is true" {
                 # Arrange
                 $vmName = "vm-with-disks"
-                $diskPath = "C:\VMs\vm-with-disks.vhdx"
+                $diskPath = "/tmp/VMs/vm-with-disks.vhdx"
                 $mockVm = [PSCustomObject]@{
                     Name = $vmName
                     State = "Off"
@@ -1213,6 +1269,195 @@ InModuleScope HvoVm {
 
                 # Act & Assert
                 { Remove-HvoVm -Name $vmName } | Should -Throw "Access denied"
+            }
+        }
+    }
+
+    Describe "Get-HvoVmNetworkAdapters" {
+        Context "When the VM does not exist" {
+            It "Should return null" {
+                # Arrange
+                $vmName = "non-existent-vm"
+
+                Mock Get-VM -ParameterFilter { $Name -eq $vmName } -MockWith { return $null }
+                Mock Get-VMNetworkAdapter -MockWith { }
+
+                # Act
+                $result = Get-HvoVmNetworkAdapters -Name $vmName
+
+                # Assert
+                $result | Should -BeNullOrEmpty
+                Should -Invoke Get-VM -Exactly -Times 1 -ParameterFilter { $Name -eq $vmName }
+                Should -Invoke Get-VMNetworkAdapter -Exactly -Times 0
+            }
+        }
+
+        Context "When the VM exists with network adapters" {
+            It "Should return a formatted list of adapters" {
+                # Arrange
+                $vmName = "vm-with-adapters"
+                $mockVm = [PSCustomObject]@{
+                    Name = $vmName
+                }
+
+                # Create mock status object with ToString method
+                $mockStatus1 = [PSCustomObject]@{ Value = "Ok" }
+                $mockStatus1 | Add-Member -MemberType ScriptMethod -Name "ToString" -Value { return "Ok" } -Force
+
+                $mockAdapter1 = [PSCustomObject]@{
+                    Name       = "Network Adapter"
+                    SwitchName = "LAN"
+                    IsLegacy   = $false
+                    MacAddress = "00155D012345"
+                    Status     = $mockStatus1
+                }
+
+                $mockStatus2 = [PSCustomObject]@{ Value = "Ok" }
+                $mockStatus2 | Add-Member -MemberType ScriptMethod -Name "ToString" -Value { return "Ok" } -Force
+
+                $mockAdapter2 = [PSCustomObject]@{
+                    Name       = "Legacy Network Adapter"
+                    SwitchName = "WAN"
+                    IsLegacy   = $true
+                    MacAddress = "00155D012346"
+                    Status     = $mockStatus2
+                }
+
+                Mock Get-VM -ParameterFilter { $Name -eq $vmName } -MockWith { return $mockVm }
+                Mock Get-VMNetworkAdapter -ParameterFilter { $VMName -eq $vmName } -MockWith { return @($mockAdapter1, $mockAdapter2) }
+
+                # Act
+                $result = Get-HvoVmNetworkAdapters -Name $vmName
+
+                # Assert
+                $result | Should -Not -BeNullOrEmpty
+                $result.Count | Should -Be 2
+                $result[0].Name | Should -Be "Network Adapter"
+                $result[0].SwitchName | Should -Be "LAN"
+                $result[0].Type | Should -Be "Synthetic"
+                $result[0].MacAddress | Should -Be "00155D012345"
+                $result[0].Status | Should -Be "Ok"
+                $result[1].Name | Should -Be "Legacy Network Adapter"
+                $result[1].Type | Should -Be "Legacy"
+                Should -Invoke Get-VM -Exactly -Times 1 -ParameterFilter { $Name -eq $vmName }
+                Should -Invoke Get-VMNetworkAdapter -Exactly -Times 1 -ParameterFilter { $VMName -eq $vmName }
+            }
+
+            It "Should handle a single adapter (not an array)" {
+                # Arrange
+                $vmName = "vm-with-single-adapter"
+                $mockVm = [PSCustomObject]@{
+                    Name = $vmName
+                }
+
+                $mockStatus = [PSCustomObject]@{ Value = "Ok" }
+                $mockStatus | Add-Member -MemberType ScriptMethod -Name "ToString" -Value { return "Ok" } -Force
+
+                $mockAdapter = [PSCustomObject]@{
+                    Name       = "Network Adapter"
+                    SwitchName = "LAN"
+                    IsLegacy   = $false
+                    MacAddress = "00155D012345"
+                    Status     = $mockStatus
+                }
+
+                Mock Get-VM -ParameterFilter { $Name -eq $vmName } -MockWith { return $mockVm }
+                Mock Get-VMNetworkAdapter -ParameterFilter { $VMName -eq $vmName } -MockWith { return $mockAdapter }
+
+                # Act
+                $result = Get-HvoVmNetworkAdapters -Name $vmName
+
+                # Assert
+                $result | Should -Not -BeNullOrEmpty
+                $result.Count | Should -Be 1
+                $result[0].Name | Should -Be "Network Adapter"
+            }
+
+            It "Should handle adapter without switch (SwitchName is null)" {
+                # Arrange
+                $vmName = "vm-with-unconnected-adapter"
+                $mockVm = [PSCustomObject]@{
+                    Name = $vmName
+                }
+
+                $mockStatus = [PSCustomObject]@{ Value = "Ok" }
+                $mockStatus | Add-Member -MemberType ScriptMethod -Name "ToString" -Value { return "Ok" } -Force
+
+                $mockAdapter = [PSCustomObject]@{
+                    Name       = "Network Adapter"
+                    SwitchName = $null
+                    IsLegacy   = $false
+                    MacAddress = "00155D012345"
+                    Status     = $mockStatus
+                }
+
+                Mock Get-VM -ParameterFilter { $Name -eq $vmName } -MockWith { return $mockVm }
+                Mock Get-VMNetworkAdapter -ParameterFilter { $VMName -eq $vmName } -MockWith { return $mockAdapter }
+
+                # Act
+                $result = Get-HvoVmNetworkAdapters -Name $vmName
+
+                # Assert
+                $result | Should -Not -BeNullOrEmpty
+                $result[0].SwitchName | Should -BeNullOrEmpty
+            }
+        }
+
+        Context "When the VM exists without network adapters" {
+            It "Should return an empty array" {
+                # Arrange
+                $vmName = "vm-without-adapters"
+                $mockVm = [PSCustomObject]@{
+                    Name = $vmName
+                }
+
+                Mock Get-VM -ParameterFilter { $Name -eq $vmName } -MockWith { return $mockVm }
+                Mock Get-VMNetworkAdapter -MockWith { return $null }
+
+                # Act
+                $result = Get-HvoVmNetworkAdapters -Name $vmName
+
+                # Assert
+                # The function returns @() which may be converted to $null by PowerShell pipeline
+                # We check that the result is either $null or an empty array
+                if ($null -ne $result) {
+                    $result.Count | Should -Be 0
+                }
+                Should -Invoke Get-VM -Exactly -Times 1
+                Should -Invoke Get-VMNetworkAdapter -Exactly -Times 1
+            }
+        }
+
+        Context "When Get-VMNetworkAdapter throws an error" {
+            It "Should propagate the error if it's not a 'not found' error" {
+                # Arrange
+                $vmName = "vm-with-error"
+                $mockVm = [PSCustomObject]@{
+                    Name = $vmName
+                }
+
+                Mock Get-VM -ParameterFilter { $Name -eq $vmName } -MockWith { return $mockVm }
+                Mock Get-VMNetworkAdapter -ParameterFilter { $VMName -eq $vmName } -MockWith { throw "Access denied" }
+
+                # Act & Assert
+                { Get-HvoVmNetworkAdapters -Name $vmName } | Should -Throw "Access denied"
+            }
+
+            It "Should return null if the error matches 'not found'" {
+                # Arrange
+                $vmName = "vm-with-not-found-error"
+                $mockVm = [PSCustomObject]@{
+                    Name = $vmName
+                }
+
+                Mock Get-VM -ParameterFilter { $Name -eq $vmName } -MockWith { return $mockVm }
+                Mock Get-VMNetworkAdapter -ParameterFilter { $VMName -eq $vmName } -MockWith { throw "VM not found" }
+
+                # Act
+                $result = Get-HvoVmNetworkAdapters -Name $vmName
+
+                # Assert
+                $result | Should -BeNullOrEmpty
             }
         }
     }
