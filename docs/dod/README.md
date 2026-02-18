@@ -104,7 +104,11 @@ Static OpenAPI specification files must be generated and kept up to date in the 
 
 ### Generation Script
 
-The OpenAPI specification can be automatically generated using the provided script located at `src/scripts/generate-openapi.ps1`.
+The OpenAPI specification can be automatically generated using the provided script :
+
+```powershell
+src/scripts/generate-openapi.ps1
+```
 
 **What the script does:**
 
